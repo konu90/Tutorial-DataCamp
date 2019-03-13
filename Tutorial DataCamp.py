@@ -318,4 +318,4 @@ for i in range(len(traffic_signs)):
                                                   images[traffic_signs[i]].min(), 
                                                   images[traffic_signs[i]].max()))
 
-print("test")
+print("Other test")
