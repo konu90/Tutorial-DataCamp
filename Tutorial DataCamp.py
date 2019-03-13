@@ -298,7 +298,7 @@ for i in range(len(traffic_signs)):
 #   To generate area to plot in each iterations
     plt.subplot(1, 4, i+1)
     #To show axis in each image(option on or off)
-    plt.axis('off')
+    plt.axis('on')
     #To plot image as image using imshow(image)
     plt.imshow(images[traffic_signs[i]])
 #   the amount of width reserved for space between subplots,
@@ -318,4 +318,178 @@ for i in range(len(traffic_signs)):
                                                   images[traffic_signs[i]].min(), 
                                                   images[traffic_signs[i]].max()))
 
-print("Other test")
+# +
+#Now that we are see 4 random images, go plot 1 image of each label class.
+
+# Get the unique labels 
+unique_labels = set(labels)
+
+#To rescale a figure in plot graphs. In this case, we rescale each image to a 15x15px.
+# Initialize the figure
+plt.figure(figsize=(15, 15))
+
+# Set a counter
+i = 1
+
+# For each unique label,
+for label in unique_labels:
+    # You pick the first image for each label
+    image = images[labels.index(label)]
+    #Define the space to plots, in this case we are plot 62 images(we need a grid of 64), 
+    #and in each iter in a grid of 8x8 we plot in position i
+    # Define 64 subplots 
+    plt.subplot(8, 8, i)
+    # Don't include axes on each subplot
+    plt.axis('off')
+    # Add a title to each subplot
+    #{0} label name
+    #{1} count of labels of that class.
+    plt.title("Label {0} ({1})".format(label, labels.count(label)))
+    # Add 1 to the counter
+    i += 1
+    # And you plot this first image 
+    plt.imshow(image)
+    
+# Show the plot
+plt.show()
+
+#we can see that we have more items of some class, for example label 22, label 32, similar that we see in the histogram above.
+#Ademas, podriamos intentar buscar alguna relación ya, por ejemplo, pensar si hay alguna relación con que las clases que
+#mas estan representadas son de tipo prohibicion, y aunque esta hipotesis es valida para las clases 22 y 32, e incluso con la 38, 
+#esto no se cumple para la clase 61.
+#La unica conclusion a priori que se puede sacar es que mas de la mitad del dataset son señales de prohibicion.
+
+# +
+#Hasta que hemos visto el dataset, podemos resumir lo siguiente:
+#El tamaño o dimensiones de las imagenes es distinto.
+#Tenemos 62 clases(empezando en 0 a 61)
+# La distribucion de las clases es desbalanceada, y no hay conexion entre esas clases.
+# Ahora que tenemos claro lo que tenemos podemos empezar a manipular los datos, de manera que los dejemos preparados
+#para alimentar nuestra red neuronal.
+
+# Import the `transform` module from `skimage`
+#from skimage import transform 
+
+#Esta declarando la lista resultante de aplicar la funcion transform.resize(imagen,(dimensiones del reescalado) 
+# variable = [] => lista vacia
+#para cada elemento de la lista images)
+#Ahora images 28
+# Rescale the images in the `images` array
+#NOTA: Al reescalar el tamaño, tambien se normalizan los valores de lo pixeles RBG.
+images28 = [transform.resize(image, (28, 28)) for image in images]
+
+
+#shape me dice alto, ancho y el numero de elementos que tiene cada componente(en este caso 3, componentes RGB)
+print("shape images28[1]:",images28[1].shape)
+print("shape images[1]:",images[1].shape)
+#Si convertimos images28 a array, e imprimimos su shape vemos que tenemos:
+#numero de fotos, dimensiones de cada foto(alto y ancho) y el valor de cada componente.
+array28 = np.array(images28)
+print("Array(images28).shape:",array28.shape)
+array = np.array(images)
+#En este caso no podra mostrarnos bien el shape porque cada imagen tiene dimensiones distintas
+print("Array(images).shape:",array.shape)
+#Ahora las imagenes tendran 784 dimensiones(28x28)
+print("Array(images[1].shape)",array[1].shape)
+
+
+
+
+# -
+
+# Fill out the subplots with the random images and add shape, min and max values
+#this plot is on images28
+for i in range(len(traffic_signs)):
+    plt.subplot(1, 4, i+1)
+    plt.axis('off')
+    plt.imshow(images28[traffic_signs[i]])
+    plt.subplots_adjust(wspace=0.5)
+    plt.show()
+    print("shape: {0}, min: {1}, max: {2}".format(images28[traffic_signs[i]].shape, 
+                                                  images28[traffic_signs[i]].min(), 
+                                                  images28[traffic_signs[i]].max()))
+
+# We can see as the value of RGB pixel change with rescale
+print(np.array(images28[0]))
+
+# +
+#In the datacamp tutorial said that the color in pictures matters less when you are trygint to answer a classification question?
+#Then we are going to convert the images in greyscale but too we will do without convert and test result.
+# Import `rgb2gray` from `skimage.color`
+# from skimage.color import rgb2gray
+
+#function: rgb2gray(array)
+# Convert `images28` to grayscale
+images28grey = rgb2gray(np.array(images28))
+
+# +
+#Plot images
+#Plot traffic_signs in raw
+for i in range(len(traffic_signs)):
+    plt.subplot(1, 4, i+1)
+    plt.axis('off')
+    plt.imshow(images[traffic_signs[i]])
+    plt.subplots_adjust(wspace=0.5)
+    
+# Show the plot
+plt.show()
+
+#Plot images rescaled 28x28
+for i in range(len(traffic_signs)):
+    plt.subplot(1, 4, i+1)
+    plt.axis('off')
+    plt.imshow(images28[traffic_signs[i]])
+    plt.subplots_adjust(wspace=0.5)
+    
+# Show the plot
+plt.show()
+#Plot traffic_signs on greyscale images
+for i in range(len(traffic_signs)):
+    plt.subplot(1, 4, i+1)
+    plt.axis('off')
+    #we have to specify the color map or cmap and set it to "gray" to plot the images in grayscale. 
+    #That is because imshow() by default uses a heatmap-like color map.
+    #Read more about this: https://stackoverflow.com/questions/39805697/skimage-why-does-rgb2gray-from-skimage-color-result-in-a-colored-image
+    plt.imshow(images28grey[traffic_signs[i]], cmap="gray")
+    plt.subplots_adjust(wspace=0.5)
+    
+# Show the plot
+plt.show()
+
+#if we dont set cmap to gray
+#Plot traffic_signs on greyscale images
+for i in range(len(traffic_signs)):
+    plt.subplot(1, 4, i+1)
+    plt.axis('off')
+    plt.imshow(images28grey[traffic_signs[i]])
+    plt.subplots_adjust(wspace=0.5)
+    
+# Show the plot
+plt.show()
+#Funcion para plotear, dado un array, indices a plotear y colormap
+def plotear(toPlot, indices, colormap):
+    for i in range(len(indices)):
+        #Maximo mostraremos 8
+        if(len(indices) > 8):
+            n = 8
+        else:
+            n = len(indices)
+        #Ploteamos de 1 a N en la posicion i+1  
+        plt.subplot(1,n, i+1)
+        #Eliminamos ejes sobre cada subplot
+        plt.axis('off')
+        #para poder pintar con escalas de grises
+        if(colormap == "grey"):
+            plt.imshow(toPlot[indices[i]], cmap="grey")
+        else:
+            plt.imshow(toPlot[indices[i]])
+        #Añadir margen
+        plt.subplots_adjust(wspace=0.5)
+        
+    #Show the plot
+    plt.show()
+
+plotear(images,traffic_signs,"none")
+# -
+
+
