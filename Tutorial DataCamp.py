@@ -245,7 +245,7 @@ print("Number of images elements:",np.array(images).size)
 
 #Print the image [0]
 print("Show images[0]:")
-print(images[0])
+print(images[300])
 #Print flags from the image [0]
 print("show flags from images[0]")
 print(images[0].flags)
@@ -254,6 +254,11 @@ print("Show size of images[0]", images[0].itemsize)
 # print bytes from the image [0]
 print("Bytes from images[0]")
 print(images[0].nbytes)
+
+#Mostrar valor RGB de un pixel
+arrayImagenes = np.array(images)
+pixel = arrayImagenes[300][0][0]
+print(pixel)
 
 # +
 # Print the `labels` dimensions
@@ -490,6 +495,28 @@ def plotear(toPlot, indices, colormap):
     plt.show()
 
 plotear(images,traffic_signs,"none")
+
+
+# +
+#Plot traffic_signs on greyscale images
+plt.imshow(arrayImagenes[300][25])
+    
+# Show the plot
+plt.show()
+#Mostrar un unico pixel
+for i in range(len(traffic_signs)):
+    plt.subplot(1, 4, i+1)
+    plt.axis('on')
+    plt.imshow([[[0,0,0]]])
+    plt.subplots_adjust(wspace=0.5)
+
+plt.show()
+    
+#     plt.subplot(1, 4, i+1)
+#     plt.axis('off')
+#     plt.imshow(images[traffic_signs[i]])
+#     plt.subplots_adjust(wspace=0.5)
 # -
+
 
 
