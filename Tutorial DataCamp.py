@@ -426,7 +426,7 @@ print(np.array(images28[0]))
 #function: rgb2gray(array)
 # Convert `images28` to grayscale
 images28grey = rgb2gray(np.array(images28))
-# images28 = rgb2gray(np.array(images28))
+images28 = rgb2gray(np.array(images28))
 
 # +
 #Plot images
