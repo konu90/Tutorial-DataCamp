@@ -382,7 +382,7 @@ plt.show()
 # Rescale the images in the `images` array
 #NOTA: Al reescalar el tamaño, tambien se normalizan los valores de lo pixeles RBG.
 images28 = [transform.resize(image, (28, 28)) for image in images]
-
+# images28 = np.array(images32)
 
 #shape me dice alto, ancho y el numero de elementos que tiene cada componente(en este caso 3, componentes RGB)
 print("shape images28[1]:",images28[1].shape)
@@ -426,6 +426,7 @@ print(np.array(images28[0]))
 #function: rgb2gray(array)
 # Convert `images28` to grayscale
 images28grey = rgb2gray(np.array(images28))
+# images28 = rgb2gray(np.array(images28))
 
 # +
 #Plot images
@@ -517,6 +518,166 @@ plt.show()
 #     plt.imshow(images[traffic_signs[i]])
 #     plt.subplots_adjust(wspace=0.5)
 # -
+############################ BELGIAN TRAFFIC SIGNS ##########################################
+####################### DEEP LEARNING WITH TENSORFLOW #######################################
+print("This is a tutorial of neural network with TrafficSigns from DataCamp in tensorflow:")
+print("https://www.datacamp.com/community/tutorials/tensorflow-tutorial")
+print("Go start to define tensors and our neural network for TrafficSigns Tuturial")
 
+# +
+#To start, we should know...
+# we can initialize the Graph with the help of Graph(). You use this function to define the computation. 
+# Note that with the Graph, you don’t compute anything, because it doesn’t hold any values. It just defines the 
+# operations that you want to be running later.
+# In this case, you set up a default context with the help of as_default(), which returns a context manager that
+# makes this specific Graph the default graph. You use this method if you want to create multiple graphs in the 
+# same process: with this function, you have a global default graph to which all operations will be added if you 
+# don’t explicitly create a new graph.
+import tensorflow as tf 
+
+#First, we define placeholders for inputs and labels because you won’t put in the “real” data yet. Remember that 
+#placeholders are values that are unassigned and that will be initialized by the session when you run it. So when 
+#you finally run the session, these placeholders will get the values of your dataset that you pass in the run() function!
+# Initialize placeholders 
+x = tf.placeholder(dtype = tf.float32, shape = [None, 28, 28], name="x")
+y = tf.placeholder(dtype = tf.int32, shape = [None], name = "y")
+
+#You first start by flattening the input with the help of the flatten() function, which will give you 
+#an array of shape [None, 784] instead of the [None, 28, 28], which is the shape of your grayscale images.
+# Flatten the input data
+images_flat = tf.contrib.layers.flatten(x)
+
+#we construct a fully connected layer that generates logits of size [None, 62]. - Porque None,62?
+#Logits is the function operates on the unscaled output of previous layers, and that uses the 
+#relative scale to understand the units is linear.
+#Cuando computamos la entrada por el bias(la neurona), el resultado se desnormaliza?, logits 
+#usa la escala relativa para que sean unidades lineales? normalizadas?
+#Otra cosa interesante a destacar, es que hace uso de la funcion relu para la activacion de las neuronas
+#tf.nn es un modulo de tensorflow para envolver operaciones en redes neuronales(por ejemplo la operacion relu)
+#De manera que logits ahora es una capa de las imagenes flateadas a 62 neuronas, aplicando la funcion relu de activacion(creo)
+#logits es 62, porque tenemos 62 clases de señales, y obtendremos valores de regresion para cada una de las clases
+#sobre los cuales calculara posteriormente la perdida que tienen dichos valores.
+# Fully connected layer 
+logits = tf.contrib.layers.fully_connected(images_flat, 62, tf.nn.relu)
+
+#Para la funcion de perdida
+
+#The choice for a loss function depends on the task that you have at hand: in this case, you make use of
+#the function sparse_softmax_cross_entropy_with_logits()
+#This computes sparse softmax cross entropy between logits and labels. In other words, it measures the probability 
+#error in discrete classification tasks in which the classes are mutually exclusive. This means that each entry is 
+#in exactly one class. Here, a traffic sign can only have one single label. Remember that, while regression is 
+#used to predict continuous values, classification is used to predict discrete values or classes of data points. 
+#You wrap this function with reduce_mean(), which computes the mean of elements across dimensions of a tensor.
+
+#En otras palabras, con el reduce_mean calculamos(declaramos la operacion) para obtener un unico valor de perdida
+#Y softmax es un clasificador de regresion, es decir que te da un conjunto de valores entre 0 y 1 para la pertenencia de la clase
+#Esto en clasificacion o en clasificaciones que son mutuamente exclusivas(no pueden pertenecer a dos clases), nos daria fallo
+#para la optimización, porque no tenemos un unico valor, si no la probabilidad de pertenecer a cada una de las clases, por
+#lo que entiendo que con esta funcion lo que hace es decidirse por un unico valor de pertenencia a clase
+#que es el que utiliza para la definicion de la funcion de perdida
+#
+#Tal y como se introdujo antes, tf.nn es un modulo que envuelve operaciones sobre redes neuronales y que en nuestro caso
+#aparte de tener la funcion relu, tiene la funcion sparse_softmax_cross_entropy_with_logits
+#aunque segun documentacion de tf esta deprecated utilizandose "tf.nn.softmax_cross_entropy_with_logits_v2"
+#See: https://www.tensorflow.org/api_docs/python/tf/nn/softmax_cross_entropy_with_logits
+#En resumen, aqui lo que hacemos es definir la funcion de perdida, es decir, que itere y vea que diferencia hay entre el 
+#valor obtenido, 
+#Calculamos pues la perdida de los valores que teniamos en logits con las etiquetas que deberian ser
+# Define a loss function
+loss = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(labels = y, logits = logits))
+
+#We also want to define a training optimizer; Some of the most popular optimization algorithms used are 
+#the Stochastic Gradient Descent (SGD), ADAM and RMSprop(Root Mean Squared propagation?). Depending on whichever algorithm you choose, 
+#you’ll need to tune certain parameters, such as learning rate or momentum. In this case, you pick the ADAM optimizer, 
+#for which you define the learning rate at 0.001.
+#un optimizador que va a minimizar la perdida
+# Define an optimizer 
+train_op = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+
+#Segun la documentacion de tensorflow
+#Returns the index with the largest value across axes of a tensor
+#En esencia aqui, es para que cuando le pasemos una "tupla", imagen o lo que sea, nos va a dar un valor de regresion con 
+#el valor de pertenencia a cada una de las clases, con argmax lo que hacemos es aplanar dicho valor, es decir
+#quedarnos con el mayor valor o the largest value accross axes of a tensor ;) 
+# Convert logits to label indexes
+correct_pred = tf.argmax(logits, 1)
+
+#tf.cast lo que hace es cambiar el tipo de un tensor a otro, en este caso, el tipo de tensor correct_pred a tf.float32
+accuracy_test = tf.reduce_mean(correct_pred)
+
+# Define an accuracy metric
+accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
+
+print("x: ", x)
+print("y: ", y)
+print("images_flat: ", images_flat)
+print("logits: ", logits)
+print("loss: ", loss)
+print("Train_op: ", train_op)
+print("Correct_pred without cast:", correct_pred)
+print("Accuracy_test: ", accuracy_test)
+print("Correct_pred with cast:", tf.cast(correct_pred, tf.float32))
+print("Accuracy: ", accuracy)
+#Lo que ocurre es que correct_pred es de tipo entero, y si queremos definir la accuracy del modelo en base a correct_pred
+#por defecto el tensor sera de tipo entero(igual que correct_pred), pero que el valor de accuracy sea entero no sirve de nada
+#necesitas un flotante
+#Podemos ver los tensores en los anteriores print
+
+# +
+tf.set_random_seed(1234)
+sess = tf.Session()
+
+sess.run(tf.global_variables_initializer())
+
+for i in range(201):
+        print('EPOCH', i)
+        _, accuracy_val = sess.run([train_op, accuracy], feed_dict={x: images28, y: labels})
+        if i % 10 == 0:
+            print("Loss: ", loss)
+        print('DONE WITH EPOCH')
+
+
+# +
+tf.set_random_seed(1234)
+
+with tf.Session() as sess:
+    sess.run(tf.global_variables_initializer())
+    for i in range(201):
+        _, loss_value = sess.run([train_op, loss], feed_dict={x: images28, y: labels})
+        if i % 10 == 0:
+            print("Loss: ", loss)
+
+# +
+# Import `matplotlib`
+import matplotlib.pyplot as plt
+import random
+
+# Pick 10 random images
+sample_indexes = random.sample(range(len(images28)), 10)
+sample_images = [images28[i] for i in sample_indexes]
+sample_labels = [labels[i] for i in sample_indexes]
+
+# Run the "correct_pred" operation
+predicted = sess.run([correct_pred], feed_dict={x: sample_images})[0]
+                        
+# Print the real and predicted labels
+print(sample_labels)
+print(predicted)
+
+# Display the predictions and the ground truth visually.
+fig = plt.figure(figsize=(10, 10))
+for i in range(len(sample_images)):
+    truth = sample_labels[i]
+    prediction = predicted[i]
+    plt.subplot(5, 2,1+i)
+    plt.axis('off')
+    color='green' if truth == prediction else 'red'
+    plt.text(40, 10, "Truth:        {0}\nPrediction: {1}".format(truth, prediction), 
+             fontsize=12, color=color)
+    plt.imshow(sample_images[i],  cmap="gray")
+
+plt.show()
+# -
 
 
